@@ -1,0 +1,253 @@
+#include "darkartTPC_messageFacility.fcl"
+
+BEGIN_PROLOG
+verbosity: 0
+END_PROLOG
+
+process_name: odrec
+
+
+
+source:
+{
+   module_type: ODReader
+#   fileNames : [ "/scratch/darkside/aldenf/ODRun008000_001.dat" ]
+   fileNames : [ "/scratch/darkside/shawest/ODRun000604_001.dat" ]
+   
+
+   # Parameters parsed by detail class
+   detail: {
+      verbosity: @local::verbosity
+      parallel_process: 0
+      #disabled_channels: [ 126, 250 ]
+      disabled_channels: [ 126, 198, 199, 227, 250 ]
+      starting_event: 0 # omit this option or set to 0 to not skip any events
+      print_event_id: 50 # set to 0 to not print any event ids. If set to n, will print the id every n events
+
+   }
+   
+}
+
+
+services: 
+{
+   TFileService : {fileName : "darkart_od_output.root"}
+   message: @local::mf_default
+   scheduler: @local::scheduler_default
+   Utilities :{
+      prompt_offset_ns : 3890  
+   }      
+}
+
+physics: 
+{
+   producers:
+   {
+      pulsecorrector:
+      {
+         module_type: PulseCorrector
+	 mode: default
+	 input_pulses: ODReader
+         verbosity: @local::verbosity
+	 
+	 baselineparams: {
+	    num_baseline_samples: 15
+	 }
+	 coerceparams: {
+	    coerce_max: 0.015
+	    coerce_min: -5.e20
+	 }
+	 speparams: {
+            spe_filename: "aux/spe_OD/spe420-Jan2014.txt"
+	 }
+         saturationparams: {
+            min_voltage: 0
+            min_consecutive_samples: 3
+            replace_wf_with_sat_trig: false
+            verbosity:0
+         }
+      }
+      lsvsumwaveformgenerator:
+      {
+         module_type: SumWaveformGenerator
+         run_info_tag: "ODReader"
+         input_pulses: pulsecorrector
+	 sum_mode: default
+	 channel_type: 1
+	 amplitudesumparams: {
+	    dummy: 3
+	 }
+	 discriminatorsumparams: {
+	    width_ns: 200
+	 }
+      }
+      wtsumwaveformgenerator:
+      {
+         module_type: SumWaveformGenerator
+         run_info_tag: "ODReader"
+         input_pulses: pulsecorrector
+	 sum_mode: default
+	 channel_type: 2
+	 amplitudesumparams: {
+	    dummy: 3
+	 }
+	 discriminatorsumparams: {
+	    width_ns: 200
+	 }
+      }      
+      lsvclusterfinder:
+      {
+	 module_type: ClusterFinder
+	 mode: "topdown"
+#	 mode: "amplitude"
+	 channel_type: 1
+	 run_info_tag: "ODReader"
+	 input_waveform: lsvsumwaveformgenerator
+	 amplitudeparams: {
+	    threshold: 320e6
+	    verbosity: 0
+	    fixed_width_ns: 300
+	    pre_threshold_ns: 20
+	 }
+	 topdownparams: {
+	    threshold: 300e6
+	    verbosity: 0
+	    max_gap_ns: 20
+	    min_width_ns: 50
+	 }
+      }
+      wtclusterfinder:
+      {
+	 module_type: ClusterFinder
+	 mode: "topdown"
+#	 mode: "amplitude"
+	 channel_type: 2
+	 run_info_tag: "ODReader"
+	 input_waveform: wtsumwaveformgenerator
+	 amplitudeparams: {
+	    threshold: 300e6
+	    verbosity: 0
+	    fixed_width_ns: 300
+	    pre_threshold_ns: 20
+	 }
+	 topdownparams: {
+	    threshold: 300e6
+	    verbosity: 0
+	    max_gap_ns: 20
+	    min_width_ns: 50
+	 }
+      }
+      lsvroiintegrator:
+      {
+	 module_type: ROIIntegrator
+	 verbosity: @local::verbosity
+	 run_info_tag: "ODReader"
+	 input_waveform: lsvsumwaveformgenerator
+	 channel_type: 1       # 0: default 1: lsv 2: WT
+	 roi_start_ns: [ -10 ] # unit ns
+	 roi_end_ns:   [ 200 ] # unit ns
+	 roi_label:    [   1 ] # 0: default 1: prompt 2: delay ...
+      }
+      lsvsliderfinder:
+      {
+	 module_type: SliderFinder
+	 verbosity: @local::verbosity
+	 run_info_tag: "ODReader"
+	 input_waveform: lsvsumwaveformgenerator
+	 channel_type: 1                   # 0: default 1: lsv 2: WT
+	 slider_width_ns: [  300,    300 ] # width of window [ns] 
+	 slider_start_ns: [ -200,   8800 ] # ns
+	 slider_end_ns:   [ 8800, 999999 ] # ns  use a large number (e.g. 999999) for end of sumwf
+	 slider_label:    [    1,      3 ] # 0: default, 1: prompt, 2: delay, 3: late
+      }
+      totalchargeintegrator:
+      {
+	 module_type: TotalChargeIntegrator
+	 verbosity: @local::verbosity
+	 input_pulses: pulsecorrector
+      }
+      lsvclusterevaluator:
+      {
+         module_type: ClusterEvaluator
+         verbosity: @local::verbosity
+         shape_evaluator: 1 #1 if you want to use this module
+         pmt_distribution_evaluator: 0 #1 if you want to use this module
+         input_waveform: lsvsumwaveformgenerator
+         input_pulses: pulsecorrector 
+         input_clusters: lsvclusterfinder
+         shapeparams:  
+         {
+            mode: "topdown"
+            threshold: 300e6 #for topdown mode only
+	    #    mode: "amplitude"
+	    #    threshold: 320e6 #for amplitude mode only
+            channel_type: 1
+         }
+         pmtdistparams:
+         {            
+            dummy: 3
+         }            
+      }
+      
+      odtree:
+      {
+         module_type: ODTreeBuilder
+         run_info_tag:     "ODReader"
+         event_info_tag:   "ODReader"
+         channel_data_tag: "" #"pulsecorrector"
+         cluster_lsv_tag:  "lsvclusterfinder"
+         cluster_wt_tag:  "wtclusterfinder"
+	 roi_lsv_tag:      "lsvroiintegrator"
+	 slider_lsv_tag:   "lsvsliderfinder"
+	 total_charge_tag: "totalchargeintegrator"
+      }
+   }
+   
+   analyzers:
+   {
+      pulsecorrectorchecker:
+      {
+         module_type: PulseCorrectorChecker
+	 inptag: "pulsecorrector"
+      }
+      odchecker:
+      {
+         module_type: ODReaderChecker
+         crd_tag: "ODReader"
+      }      
+   }
+
+
+   p0: [
+      pulsecorrector, 
+      totalchargeintegrator, 
+      lsvsumwaveformgenerator, 
+      wtsumwaveformgenerator, 
+      lsvclusterfinder, 
+      wtclusterfinder, 
+      lsvsliderfinder, 
+      lsvroiintegrator,
+      lsvclusterevaluator, 
+      odtree 
+   ]
+#   a0: [ histos ] # sumwaveformchecker ]
+   #write: [ writer ]
+}
+
+
+outputs:
+{
+   writer:
+   {
+      module_type: RootOutput
+      fileName : "odtest.root"
+      
+      # We keep only the products named in the 'keep' commands.
+      outputCommands: 
+      [ 
+         "drop *",
+         "keep *_pulsecorrector_*_*"
+      ]
+      
+   }
+}
