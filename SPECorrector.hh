@@ -13,6 +13,9 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Utilities/InputTag.h"
+
+#include "darksidecore/ArtServices/DBInterface.hh"
+
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -36,7 +39,7 @@ public:
   float getPeakAmplitude() const { return _peak_amplitude;}
   float getIntegral()      const { return _integral;}
 
-  void loadSPEFile(); //filename is set in fhicl file
+  void loadSPEVals(); //filename is set in fhicl file
 
 private:
   float _integral;
@@ -44,9 +47,10 @@ private:
   float _pedestal_rms; 
   //float _pedestal_mean; //not scaled by spe_mean
   int _verbosity;
+  bool _read_SPEmeans_from_file;
   std::string _spe_filename;
-
-
+  std::string _db_table_version; 
+  int _run_num;
 
   std::vector<int> _ch_v;
   std::vector<float> _spe_mean_v;

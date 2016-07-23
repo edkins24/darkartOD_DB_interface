@@ -34,6 +34,7 @@ services:
    TFileService : {fileName : "darkart_od_output.root"}
    message: @local::mf_default
    scheduler: @local::scheduler_default
+   DBInterface: @local::DBInterface_d
    Utilities :{
       prompt_offset_ns : 3890  
    }      
@@ -58,7 +59,8 @@ physics:
 	    coerce_min: -5.e20
 	 }
 	 speparams: {
-            spe_filename: "aux/spe_OD/spe420-Jan2014.txt"
+           # spe_filename: "aux/spe_OD/spe420-Jan2014.txt"
+           run_num = 12348  # to be added: RUNNUMTEMP to template fcl file
 	 }
          saturationparams: {
             min_voltage: 0
