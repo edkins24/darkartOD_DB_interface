@@ -149,21 +149,6 @@ void SPECorrector::loadSPEVals(){
       _ch_v.push_back(ch);
       _spe_mean_v.push_back(spe);
 
-  /*  if (_run_num < 34) {
-      ds50::db::result res = dbi->run(_run_num, "dark_art.laser_calibration", db_table_version);
-    }
-    else if (_run_num < 141) {
-    
-    }
-    else if (_run_num < 327) {
-    
-    }
-    else if (_run_num < 420) {
-    
-    }
-    else {
-    
-    }*/
   }
 }
 
