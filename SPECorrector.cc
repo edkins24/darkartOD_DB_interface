@@ -35,11 +35,11 @@ SPECorrector::SPECorrector(fhicl::ParameterSet const &p, const int verbosity):
   _pedestal_rms(-1),
   _verbosity(verbosity),
   _read_SPEmeans_from_file(p.get<bool>("read_SPEmeans_from_file", false)),
-  _spe_filename(p.get<std::string>("spe_filename","")),
+  _spe_filename(p.get<std::string>("spe_filename",""))
   // _db_table_version(p.get<std::string>("db_table_version")),
   // _run_num(p.get<int>("run_num")
 {
-  if (read_SPEmeans_from_file) {
+  if (_read_SPEmeans_from_file) {
     LOG_INFO("SPECorrector") << "verbosity:  " << _verbosity << ", spe_filename: " << _spe_filename;
   }
 ;}
@@ -89,7 +89,7 @@ void SPECorrector::normalizePulseMomenta(darkart::od::ChannelData::Pulse & pulse
 
 void SPECorrector::loadSPEVals(){
 // if flagged, load the SPE from a text file (rather than DB)
-  if (read_SPEmeans_from_file) {
+  if (_read_SPEmeans_from_file) {
 
     // Read SPEs in from file
     //if ( _verbosity > 0 )
@@ -133,7 +133,7 @@ void SPECorrector::loadSPEVals(){
     art::ServiceHandle<ds50::DBInterface> dbi;
     art::Handle<darkart::od::ODEventInfo> event_info;
     _run_num = event_info->run_id;
-    ds50::db::result res = dbi->run(_run_num, "dark_art.od_values", /*_db_table_version*/);
+    ds50::db::result res = dbi->run(_run_num, "dark_art.od_values", "");
     
     const size_t ncells = res.cell_elements("channel_id", 0);
     for (size_t i=0; i<ncells; i++) {
@@ -150,7 +150,7 @@ void SPECorrector::loadSPEVals(){
       
       _ch_v.push_back(ch);
       _spe_mean_v.push_back(spe);
-
+      }
   }
 }
 
