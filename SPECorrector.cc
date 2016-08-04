@@ -36,8 +36,8 @@ SPECorrector::SPECorrector(fhicl::ParameterSet const &p, const int verbosity):
   _verbosity(verbosity),
   _read_SPEmeans_from_file(p.get<bool>("read_SPEmeans_from_file", false)),
   _spe_filename(p.get<std::string>("spe_filename","")),
-  _db_table_version(p.get<std::string>("db_table_version")),
-  _run_num(p.get<int>("run_num")
+  // _db_table_version(p.get<std::string>("db_table_version")),
+  // _run_num(p.get<int>("run_num")
 {
   if (read_SPEmeans_from_file) {
     LOG_INFO("SPECorrector") << "verbosity:  " << _verbosity << ", spe_filename: " << _spe_filename;
@@ -131,12 +131,14 @@ void SPECorrector::loadSPEVals(){
   }
   else { // load SPE from DB
     art::ServiceHandle<ds50::DBInterface> dbi;
-    ds50::db::result res = dbi->run(_run_num, "dark_art.od_values", db_table_version);
+    art::Handle<darkart::od::ODEventInfo> event_info;
+    _run_num = event_info->run_id;
+    ds50::db::result res = dbi->run(_run_num, "dark_art.od_values", /*_db_table_version*/);
     
-    const size_t ncells = res.cell_elements("od_channel_id", 0);
+    const size_t ncells = res.cell_elements("channel_id", 0);
     for (size_t i=0; i<ncells; i++) {
 
-      int ch = res.get<int>("od_channel_id", 0, i);
+      int ch = res.get<int>("channel_id", 0, i);
       double spe = res.get<double>("spe_mean", 0, i);
       
       // check if values in db are NaN; if so, set value to -1

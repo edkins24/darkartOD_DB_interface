@@ -13,6 +13,7 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Utilities/InputTag.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
 
 #include "darksidecore/ArtServices/DBInterface.hh"
 
@@ -39,7 +40,7 @@ public:
   float getPeakAmplitude() const { return _peak_amplitude;}
   float getIntegral()      const { return _integral;}
 
-  void loadSPEVals(); //filename is set in fhicl file
+  void loadSPEVals(); //if from file, filename is set in fhicl file
 
 private:
   float _integral;
