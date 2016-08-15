@@ -195,7 +195,7 @@ void darkart::od::PulseCorrector::beginRun(art::Run & r)
     // Load SPE file in _spe_corrector
     //ToDo: transfer the database interface from the TPC to here, to pick up the SPE calibrations from DB
     //    _spe_corrector->loadSPEFile(int(r.run()));
-    _spe_corrector->loadSPEFile();
+    _spe_corrector->loadSPEVals();
   }
 }
 
