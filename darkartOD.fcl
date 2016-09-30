@@ -1,7 +1,16 @@
 #include "darkartTPC_messageFacility.fcl"
 
 BEGIN_PROLOG
-verbosity: 0
+verbosity: 2
+
+DBInterface_d:
+ {
+ hostname: "ds50daq.lngs.infn.it"
+ database: "darkside50"
+ user: "dark"
+ password: "art"
+ }
+
 END_PROLOG
 
 process_name: odrec
@@ -13,6 +22,7 @@ source:
    module_type: ODReader
 #   fileNames : [ "/scratch/darkside/aldenf/ODRun008000_001.dat" ]
    fileNames : [ "/scratch/darkside/shawest/ODRun000604_001.dat" ]
+#   fileNames : [ "/scratch/darkside/shawest/ODRun009352_001.dat" ]
    
 
    # Parameters parsed by detail class
@@ -21,6 +31,8 @@ source:
       parallel_process: 0
       #disabled_channels: [ 126, 250 ]
       disabled_channels: [ 126, 198, 199, 227, 250 ]
+      #disabled_channels: [ 10, 27, 198, 201, 224, 225, 231 ]
+      #disabled_channels: [ 10, 33, 27, 198, 201, 207, 213, 215, 21, 224, 225, 231 ]
       starting_event: 0 # omit this option or set to 0 to not skip any events
       print_event_id: 50 # set to 0 to not print any event ids. If set to n, will print the id every n events
 
@@ -37,6 +49,7 @@ services:
    DBInterface: @local::DBInterface_d
    Utilities :{
       prompt_offset_ns : 3890  
+      #prompt_offset_ns : -6564  
    }      
 }
 
@@ -59,8 +72,8 @@ physics:
 	    coerce_min: -5.e20
 	 }
 	 speparams: {
-           # spe_filename: "aux/spe_OD/spe420-Jan2014.txt"
-           run_num = 12348  # to be added: RUNNUMTEMP to template fcl file
+	       # read_SPEmeans_from_file = 0
+            spe_filename: "aux/spe_OD/spe420-Jan2014.txt"
 	 }
          saturationparams: {
             min_voltage: 0
